@@ -1,0 +1,206 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Denis Tranchemontagne
+#+EMAIL: dtranche@gmail.com
+
+The idea is taken from a series of videos including
+[[https://www.youtube.com/watch?v=VIuOwIBL-ZU]]
+[[https://www.youtube.com/watch?v=gRb3bq0NiXY&feature=youtu.be]]
+
+use-package is described here [[https://github.com/jwiegley/use-package]]
+
+I've taken liberally from lots of sources on the web.  I may try to link some more
+here.
+
+* Enable Use-package
+#+begin_src emacs-lisp :tangle yes
+;; Put your whole init here
+(message "Trying to use org mode for everything")
+(eval-when-compile
+  (require 'use-package))
+#+end_src
+
+* User Information
+#+begin_src emacs-lisp
+  (setq user-full-name "Denis Tranchemontagne"
+        user-mail-address "dtranche@gmail.com")
+  (defvar user (getenv "USER"))
+#+end_src
+
+* Set Customization Files
+#+begin_src emacs-lisp
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (load custom-file)
+#+end_src
+
+* Sane Defaults
+Emacs needs some tweeking out of the box. This will get some of the annoyances gone.
+#+begin_src emacs-lisp
+  ;; don't need a tool-bar
+  (tool-bar-mode -1)
+  (setq inhibit-startup-message nil)
+  (setq-default tab-width 2)
+  (setq-default indent-tabs-mode nil)
+
+  (line-number-mode t)
+  (column-number-mode t)
+  (xterm-mouse-mode t)
+  ;;S-Up S-Down S-Left S-Right
+  (windmove-default-keybindings)
+
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  ;; because I hate trailing whitespace
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+
+* Global Key Bindings
+#+begin_src emacs-lisp
+  ;; Key mappings that aren't source specific
+  ;; I don't know what I'd do with out this one
+  (define-key global-map "\C-xg" 'goto-line)
+
+  (define-key global-map [delete] 'delete-char)
+  (define-key global-map [backspace] 'delete-backward-char)
+  (define-key global-map [end] 'end-of-line )
+
+  (define-key global-map [f2] 'undo)
+  (define-key global-map [f10] 'next-error)
+#+end_src
+
+* C/C++ Programming
+#+begin_src emacs-lisp
+    (use-package cc-mode
+      :bind (([f9] . compile))
+      :preface
+      (defun my-c-mode-hook()
+        (which-function-mode 1)
+        (message "In my-c-mode-hook")
+        (let ((bufname (buffer-file-name)))
+          ;;(message (format "The buffer is %s" bufname))
+          (when bufname
+            (cond
+             ((string-match "/denist/" bufname)
+              (c-set-style "redline")
+
+              (message "Redline c-style"))
+             ((string-match "/denistranchemontagne" bufname)
+              (c-set-style "dtranche")
+              (message "dtranche s-style"))
+             (t
+              (c-set-style "k&r")
+              (message "k&r cstyle"))))))
+      :config
+      (add-hook 'c-mode-common-hook 'my-c-mode-hook)
+
+      (add-to-list 'c-style-alist
+                   '("redline"
+                     (indent-tabs-mode . nil)
+                     (setq mode-name "Redline C Style")
+                     (c-basic-offset . 5)
+                     (c-basic-indent . 5)))
+      (add-to-list 'c-style-alist
+                   '("dtranche"
+                     (indent-tabs-mode . nil)
+                     (setq mode-name "dtranche C Style")
+                     (c-basic-offset . 2)
+                     (c-basic-indent . 2)))
+      ;; move to redline mode
+      (setq compile-history
+            '("make -j 32 server_check_native"
+              "make -j 32 server_fast_native"
+              "make -j 32 server_rpm_native"
+              "make -j 32 server_clean_native"
+              "make -j 32 clean")))
+
+#+end_src
+
+* Packages
+To execute the block of code use org-babel-execute-src-block
+To switch to editing mode C-c ' (single quote)
+** auto-complete
+#+begin_src emacs-lisp
+  (use-package auto-complete
+    :diminish auto-complet-mode
+    :config (ac-config-default))
+#+end_src
+
+** ag
+#+begin_src emacs-lisp
+  (use-package ag
+    :init
+    (setq ag-highlight-search t)
+    :config
+    (add-to-list 'ag-arguments "--noaffinity"))
+#+end_src
+
+** Org
+#+begin_src emacs-lisp
+  (use-package org
+    :bind ([f3] . org-babel-execute-src-block)
+  )
+  (use-package org-bullets
+    :after org
+    :config
+    (org-bullets-mode 1))
+#+end_src
+
+** projectile
+#+begin_src emacs-lisp
+  (use-package projectile)
+#+end_src
+
+** xcscope
+#+begin_src emacs-lisp
+  (use-package xcscope
+    :bind
+    (([f5] . cscope-find-global-definition)
+     ([f6] . cscope-find-this-symbol)
+     ([shift f6] . cscope-find-this-text-string))
+    )
+#+end_src
+
+** ivy
+Trying to switch from helm to ivy -- ivy is simpler
+#+begin_src emacs-lisp
+  (use-package counsel
+    :ensure t
+  ;;  :bind
+  ;;  (("M-y" . counsel-yank-pop)
+  ;;   :map ivy-minibuffer-map
+  ;;    ("M-y" . ivy-next-line)))
+  )
+
+  (use-package ivy
+    :ensure t
+    :diminish (ivy-mode)
+    :bind (("C-x b" . ivy-switch-buffer))
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-display-style 'fancy))
+
+
+  (use-package swiper
+    :ensure t
+    :bind (("C-s"      . swiper)
+           ("C-r"      . swiper)
+           ("C-c C-r"  . ivy-resume)
+           ("M-x"      . counsel-M-x)
+           ("C-x C-f"  . counsel-find-file))
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+      ))
+
+#+end_src
+
+* Things to test
+#+begin_src emacs-lisp
+    ;; this is just a test package didn't work
+    (use-package nyan-mode
+      :ensure nil)
+    (use-package ace-jump-mode
+      :ensure nil)
+#+end_src

@@ -1,0 +1,300 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Denis Tranchemontagne
+#+EMAIL: dtranche@gmail.com
+
+The idea is taken from a series of videos including
+[[https://www.youtube.com/watch?v=VIuOwIBL-ZU]]
+[[https://www.youtube.com/watch?v=gRb3bq0NiXY&feature=youtu.be]]
+
+use-package is described here [[https://github.com/jwiegley/use-package]]
+
+I've taken liberally from lots of sources on the web.  I may try to link some more
+here.
+
+* Enable Use-package
+#+begin_src emacs-lisp :tangle yes
+  ;; Put your whole init here
+  (message "Trying to use org mode for everything")
+  (eval-when-compile
+    (unless (package-installed-p 'use-package)
+      (package-install 'use-package)
+      (require 'use-package)))
+#+end_src
+
+* User Information
+#+begin_src emacs-lisp
+  (setq user-full-name "Denis Tranchemontagne"
+        user-mail-address "dtranche@gmail.com")
+  (defvar user (getenv "USER"))
+#+end_src
+
+* Set Customization Files
+#+begin_src emacs-lisp
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (load custom-file)
+#+end_src
+
+* Sane Defaults
+Emacs needs some tweeking out of the box. This will get some of the annoyances gone.
+#+begin_src emacs-lisp
+  ;; don't need a tool-bar
+  (tool-bar-mode 1)
+  (setq inhibit-startup-message nil)
+  (setq-default tab-width 2)
+  (setq-default indent-tabs-mode nil)
+
+  (line-number-mode t)
+  (column-number-mode t)
+  (xterm-mouse-mode t)
+  ;;S-Up S-Down S-Left S-Right
+  (windmove-default-keybindings)
+
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  ;; because I hate trailing whitespace
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+
+* Global Key Bindings
+#+begin_src emacs-lisp
+  ;; Key mappings that aren't source specific
+  ;; I don't know what I'd do with out this one
+  (define-key global-map "\C-xg" 'goto-line)
+
+  (define-key global-map [delete] 'delete-char)
+  (define-key global-map [backspace] 'delete-backward-char)
+  (define-key global-map [end] 'end-of-line )
+
+  (define-key global-map [f2] 'undo)
+  (define-key global-map [f9] 'compile)
+  (define-key global-map [f10] 'next-error)
+#+end_src
+
+* C/C++ Programming
+#+begin_src emacs-lisp
+  (use-package cc-mode
+    :preface
+    (defun my-c-mode-hook()
+      (which-function-mode 1)
+;;      (message "In my-c-mode-hook")
+      (let ((bufname (buffer-file-name)))
+;;        (message (format "The buffer is %s" bufname))
+        (when bufname
+          (cond
+           ((string-match "/denist/" bufname)
+            (c-set-style "redline")
+            (message "Redline c-style"))
+           ((string-match "/denistranchemontagne" bufname)
+            (c-set-style "dtranche")
+            (message "dtranche s-style"))
+           (t
+            (c-set-style "k&r")
+            (message "k&r cstyle"))))))
+    :config
+    (add-hook 'c-mode-common-hook 'my-c-mode-hook)
+
+    (add-to-list 'c-style-alist
+                 '("redline"
+                   (indent-tabs-mode . nil)
+                   (setq mode-name "Redline C Style")
+                   (c-basic-offset . 5)
+                   (c-basic-indent . 5)))
+    (add-to-list 'c-style-alist
+                 '("dtranche"
+                   (indent-tabs-mode . nil)
+                   (setq mode-name "dtranche C Style")
+                   (c-basic-offset . 2)
+                   (c-basic-indent . 2))))
+#+end_src
+
+* Packages
+To execute the block of code use org-babel-execute-src-block
+To switch to editing mode C-c ' (single quote)
+
+** auto-complete
+#+begin_src emacs-lisp
+ (use-package auto-complete)
+#+end_src
+
+** helm
+#+begin_src emacs-lisp
+  ;; This was taken from John Wiegely's dotemacs
+  (use-package helm-config
+    :disabled
+    :demand nil
+    :load-path "site-lisp/helm"
+    :bind (("C-c h"   . helm-command-prefix)
+           ("C-h a"   . helm-apropos)
+          ;; ("C-h e a" . my-helm-apropos)
+           ("C-x f"   . helm-multi-files)
+           ("M-s b"   . helm-occur)
+           ("M-s n"   . my-helm-find)
+           ("M-H"     . helm-resume)
+           ;; ("M-x"     . helm-M-x)
+           )
+
+    :preface
+    (defun my-helm-find ()
+      (interactive)
+      (helm-find nil))
+
+    :config
+    ;; enable fuzzy matching
+    (setq helm-M-x-fuzzy-match t)
+
+    ;; (use-package helm-commands) -- doesn't exist??
+    (use-package helm-files)
+    (use-package helm-buffers)
+    (use-package helm-mode
+      :diminish helm-mode
+      :init
+      (helm-mode 1))
+
+    (use-package helm-multi-match)
+
+    (helm-autoresize-mode 1)
+
+    (bind-key "<tab>" #'helm-execute-persistent-action helm-map)
+    (bind-key "C-i" #'helm-execute-persistent-action helm-map)
+    (bind-key "C-z" #'helm-select-action helm-map)
+    (bind-key "A-v" #'helm-previous-page helm-map)
+
+    (when (executable-find "curl")
+      (setq helm-google-suggest-use-curl-p t)))
+#+end_src
+
+** Org
+#+begin_src emacs-lisp
+  (use-package org
+    :ensure t
+    :bind (
+           ([f3] . org-babel-execute-src-block))
+    )
+#+end_src
+
+#+begin_src emacs-lisp
+    (use-package org-bullets
+      :config
+      (org-bullets-mode 1))
+#+end_src
+
+** projectile
+#+begin_src emacs-lisp
+  (use-package projectile)
+#+end_src
+
+** xcscope
+#+begin_src emacs-lisp
+  (use-package xcscope)
+#+end_src
+** Ivy
+ivy is updated every hour, use package-refresh-contents
+prior to install
+#+begin_src emacs-lisp
+   (use-package ivy
+     :ensure t
+     :diminish ivy-mode
+     :bind (
+            ("C-s" . swiper)
+            ("C-c C-r" . ivy-resume))
+     :config
+     (ivy-mode 1)
+     (set ivy-use-virtual-buffers t)
+     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  )
+#+end_src
+
+#+RESULTS:
+
+
+
+
+* Things to test
+#+begin_src emacs-lisp
+    ;; this is just a test package didn't work
+    (use-package nyan-mode
+      :ensure nil)
+    (use-package ace-jump-mode
+      :ensure nil)
+#+end_src
+
+#+begin_src emacs-lisp
+  (when (package-installed-p 'xcscope)
+    (use-package helm-cscope))
+#+end_src
+
+#+begin_src emacs-lisp
+  (use-package aq)
+#+end_src
+
+
+** Ivy
+ivy is updated every hour, use package-refresh-contents
+prior to install
+#+begin_src emacs-lisp
+  (use-package ivy
+    :ensure t
+    :diminish ivy-mode
+    :bind (
+           ("C-s" . swiper)
+           ("C-c C-r" . ivy-resume))
+    :config
+    (ivy-mode 1)
+    (set ivy-use-virtual-buffers t))
+#+end_src
+
+#+RESULTS:
+
+* BAD C++
+#+begin_src emacs-lisp
+  ;; Redline uses a coding style slightly different then I would like
+  ;; Have 2 depending on who I am
+  ;; # (defun my-cpp-mode ()
+  ;; #   "Denis' C++ Mode"
+  ;; #     (c++-mode)
+  ;; #       (c-set-style "Ellemtel")
+  ;; #       (setq indent-tabs-mode nil)        ; use spaces rather than tabs
+  ;; #       (setq c-basic-offset 2)            ; indent by 2 spaces
+  ;; #       (setq c-basic-indent 2)
+  ;; #       (c-set-offset 'case-label '+)
+  ;; #       (c-set-offset 'comment-intro 'c-lineup-comment)
+  ;; #       (c-set-offset 'inclass 'my-c-lineup-inclass)
+  ;; #       (setq mode-name "Denis' C++")
+  ;; #       )
+  ;; # (defun my-c-lineup-inclass (langelem)
+  ;; #   (let ((inclass (assoc 'inclass c-syntactic-context)))
+  ;; #       (save-excursion
+  ;; #             (goto-char (c-langelem-pos inclass))
+  ;; #             (if (or (looking-at "struct")
+  ;; #                     (looking-at "typedef struct"))
+  ;; #                   '+
+  ;; #                       '++))))
+
+  ;; # (defun my-redline-mode ()
+  ;; #     "Denis' Redline mode"
+  ;; #     (c++-mode)
+  ;; #     (c-set-style "k&r")
+  ;; #     (c-set-offset 'inextern-lang '0)
+  ;; #     (setq indent-tabs-mode nil)        ; use spaces rather than tabs
+  ;; #     (setq c-basic-offset 5)            ; indent by 2 spaces
+  ;; #     (setq c-basic-indent 5)
+  ;; #     (modify-syntax-entry ?_ "w")
+  ;; #     )
+
+  ;; #   ;; Associate extensions with modes
+  ;; #   ;; Use same mode for c and c++
+  ;; #   (if (string-match user "dtranche")
+  ;; #       (progn
+  ;; #         (add-to-list 'auto-mode-alist '("\\.h$" . my-cpp-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.cpp$" . my-cpp-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.cc$" . my-cpp-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.c$" . my-cpp-mode))))
+
+  ;; #   ;; more readline specific
+  ;; #   (if (string-match user "denist")
+  ;; #       (progn
+  ;; #         (add-to-list 'auto-mode-alist '("\\.h$" . my-redline-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.cpp$" . my-redline-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.cc$" . my-redline-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.src$" . my-redline-mode))
+  ;; #         (add-to-list 'auto-mode-alist '("\\.c$" . my-redline-mode))))
+#+end_src
