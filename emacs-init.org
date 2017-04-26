@@ -199,11 +199,11 @@ prior to install
      :config
      (ivy-mode 1)
      (set ivy-use-virtual-buffers t)
-     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+     (global-set-key (kbd "C-x C-f") 'counsel-projectile)
+     (global-set-kye (kbd "C-f) 'find-file)
   )
 #+end_src
 
-#+RESULTS:
 
 
 
@@ -236,13 +236,14 @@ prior to install
     :diminish ivy-mode
     :bind (
            ("C-s" . swiper)
-           ("C-c C-r" . ivy-resume))
+           ("C-c C-r" . ivy-resume)
+           ("C-x C-f" . counsel-projectile)
+           ("C-f" . find-file))
     :config
     (ivy-mode 1)
     (set ivy-use-virtual-buffers t))
 #+end_src
 
-#+RESULTS:
 
 * BAD C++
 #+begin_src emacs-lisp

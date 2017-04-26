@@ -47,23 +47,38 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   ;;S-Up S-Down S-Left S-Right
   (windmove-default-keybindings)
 
-  (defalias 'yes-or-no-p 'y-or-n-p)
+  (fset 'yes-or-no-p 'y-or-n-p)
   ;; because I hate trailing whitespace
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
 
 * Global Key Bindings
 #+begin_src emacs-lisp
-  ;; Key mappings that aren't source specific
-  ;; I don't know what I'd do with out this one
-  (define-key global-map "\C-xg" 'goto-line)
+    ;; Key mappings that aren't source specific
+    ;; I don't know what I'd do with out this one
+    (define-key global-map "\C-xg" 'goto-line)
 
-  (define-key global-map [delete] 'delete-char)
-  (define-key global-map [backspace] 'delete-backward-char)
-  (define-key global-map [end] 'end-of-line )
+    (define-key global-map [delete] 'delete-char)
+    (define-key global-map [backspace] 'delete-backward-char)
+    (define-key global-map [end] 'end-of-line )
+    (global-unset-key [f10] )
+  ;;  (define-key global-map [f1] 'swiper)
+    (define-key global-map [f2] 'undo)
+  ;;  (define-key global-map [f10] 'next-error)
+    (global-set-key "%" 'match-paren)
+#+end_src
 
-  (define-key global-map [f2] 'undo)
-  (define-key global-map [f10] 'next-error)
+#+RESULTS:
+: match-paren
+
+* Custom Functions
+#+begin_src emacs-lisp
+  (defun match-paren (arg)
+    "Go to the matching paren if on a paren; otherwise insert %."
+      (interactive "p")
+        (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+              ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+              (t (self-insert-command (or arg 1)))))
 #+end_src
 
 * C/C++ Programming
@@ -172,7 +187,13 @@ Trying to switch from helm to ivy -- ivy is simpler
   (use-package ivy
     :ensure t
     :diminish (ivy-mode)
-    :bind (("C-x b" . ivy-switch-buffer))
+    :bind (("C-x b" . ivy-switch-buffer)
+           ([f1] . swiper)
+           ("C-x C-f" . counsel-projectile-find-file)
+           ("C-f" . find-file)
+           (:map minibuffer-local-map
+                 ([f10] . ivy-next-line)
+                 ([shift-f10] . ivy-previous-line)))
     :config
     (ivy-mode 1)
     (setq ivy-use-virtual-buffers t)
@@ -184,8 +205,7 @@ Trying to switch from helm to ivy -- ivy is simpler
     :bind (("C-s"      . swiper)
            ("C-r"      . swiper)
            ("C-c C-r"  . ivy-resume)
-           ("M-x"      . counsel-M-x)
-           ("C-x C-f"  . counsel-find-file))
+           ("M-x"      . counsel-M-x))
     :config
     (progn
       (ivy-mode 1)
@@ -195,6 +215,8 @@ Trying to switch from helm to ivy -- ivy is simpler
       ))
 
 #+end_src
+
+#+RESULTS:
 
 * Things to test
 #+begin_src emacs-lisp

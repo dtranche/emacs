@@ -5,7 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (org-bullets counsel flx ivy ag helm-cscope xcscope projectile helm-helm-commands helm use-package auto-complete))))
+    (pdf-tools markdown-preview-eww markdown-mode counsel-projectile org-bullets counsel flx ivy ag helm-cscope xcscope projectile helm-helm-commands helm use-package auto-complete))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
