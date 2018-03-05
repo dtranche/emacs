@@ -1,6 +1,6 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Denis Tranchemontagne
-#+EMAIL: dtranche@gmail.com
+#+Email: dtranche@gmail.com
 
 The idea is taken from a series of videos including
 [[https://www.youtube.com/watch?v=VIuOwIBL-ZU]]
@@ -14,7 +14,7 @@ here.
 * Enable Use-package
 #+begin_src emacs-lisp :tangle yes
 ;; Put your whole init here
-(message "Trying to use org mode for everything")
+(message "Updated <2017-11-10 Fri>")
 (eval-when-compile
   (require 'use-package))
 #+end_src
@@ -35,12 +35,17 @@ here.
 * Sane Defaults
 Emacs needs some tweeking out of the box. This will get some of the annoyances gone.
 #+begin_src emacs-lisp
+  (setenv "PATH"
+          (concat "/opt/redline/inrush/examples"
+                  (getenv "PATH")))
   ;; don't need a tool-bar
   (tool-bar-mode -1)
-  (setq inhibit-startup-message nil)
+  (scroll-bar-mode -1)
+  (setq inhibit-startup-message -1)
   (setq-default tab-width 2)
-  (setq-default indent-tabs-mode nil)
-
+  (setq-default indent-tabs-mode -1)
+  (setq tramp-default-method "ssh")
+  (setq linenum-format "%d ")
   (line-number-mode t)
   (column-number-mode t)
   (xterm-mouse-mode t)
@@ -50,92 +55,145 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   (fset 'yes-or-no-p 'y-or-n-p)
   ;; because I hate trailing whitespace
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
+
 #+end_src
-
-* Global Key Bindings
-#+begin_src emacs-lisp
-    ;; Key mappings that aren't source specific
-    ;; I don't know what I'd do with out this one
-    (define-key global-map "\C-xg" 'goto-line)
-
-    (define-key global-map [delete] 'delete-char)
-    (define-key global-map [backspace] 'delete-backward-char)
-    (define-key global-map [end] 'end-of-line )
-    (global-unset-key [f10] )
-  ;;  (define-key global-map [f1] 'swiper)
-    (define-key global-map [f2] 'undo)
-  ;;  (define-key global-map [f10] 'next-error)
-    (global-set-key "%" 'match-paren)
-#+end_src
-
-#+RESULTS:
-: match-paren
 
 * Custom Functions
 #+begin_src emacs-lisp
-  (defun match-paren (arg)
-    "Go to the matching paren if on a paren; otherwise insert %."
-      (interactive "p")
-        (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-              ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-              (t (self-insert-command (or arg 1)))))
+     (defun match-paren (arg)
+       "Go to the matching paren if on a paren; otherwise insert %."
+         (interactive "p")
+           (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+                 ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+                 (t (self-insert-command (or arg 1)))))
+   (defun prada ()
+     (interactive)
+     (find-file "/scp:denist@prada:/home/denist/working_dir"))
+
+  ;; (defun my-find-file( )
+  ;;     (interactive)
+  ;;     (if (projectile-project-p)
+  ;;         (counsel-projectile-find-file)
+  ;;      (find-file)))
+
+  (defun get-point ( symbol &optional arg )
+    "get the point"
+    (funcall symbol arg )
+    (point)
+    )
+
+  (defun copy-thing ( begin-of-thing end-of-thing &optional arg )
+    "copy thing between beg & end into kill ring"
+    (save-excursion
+      (let ((beg (get-point begin-of-thing 1))
+            (end (get-point end-of-thing arg)))
+        (copy-region-as-kill beg end)))
+    )
+
+  (defun copy-word (&optional arg)
+    "Copy words at point into kill-ring"
+    (interactive "P")
+    (copy-thing 'backward-word 'forward-word arg)
+    )
+
+  (global-set-key (kbd "C-b") 'copy-word)
+
+#+end_src
+
+#+RESULTS:
+: copy-word
+:
+* Global Key Bindings
+#+begin_src emacs-lisp
+      ;; Key mappings that aren't source specific
+      ;; I don't know what I'd do with out this one
+      (define-key global-map "\C-xg" 'goto-line)
+      (define-key global-map [delete] 'delete-char)
+      (define-key global-map [backspace] 'delete-backward-char)
+      (define-key global-map [end] 'end-of-line )
+      (global-unset-key [f10] )
+      (define-key global-map [f2] 'undo)
+      (define-key global-map [f10] 'next-error)
+
+      (global-set-key [remap forward-word] 'forward-symbol)
+
+      ;;(define-key c-mode-base-map [f3] 'ag-project)
+      (define-key global-map "\C-f" 'find-file)
+      (global-set-key "%" 'match-paren)
+      (when (display-graphic-p)
+        (define-key global-map "\M-w" 'kill-ring-save)
+        (if (eq system-type 'darwin)
+            (setq mac-command-modifier 'meta)))
+
+
 #+end_src
 
 * C/C++ Programming
 #+begin_src emacs-lisp
-    (use-package cc-mode
-      :bind (([f9] . compile))
-      :preface
-      (defun my-c-mode-hook()
-        (which-function-mode 1)
-        (message "In my-c-mode-hook")
-        (let ((bufname (buffer-file-name)))
-          ;;(message (format "The buffer is %s" bufname))
-          (when bufname
-            (cond
-             ((string-match "/denist/" bufname)
-              (c-set-style "redline")
+  (use-package cc-mode
+    :bind ([f9] . compile)
 
-              (message "Redline c-style"))
-             ((string-match "/denistranchemontagne" bufname)
-              (c-set-style "dtranche")
-              (message "dtranche s-style"))
-             (t
-              (c-set-style "k&r")
-              (message "k&r cstyle"))))))
-      :config
-      (add-hook 'c-mode-common-hook 'my-c-mode-hook)
+    :preface
+    (defun my-c-mode-hook()
+      (which-function-mode 1)
+      (message "In my-c-mode-hook")
+      (projectile-mode 1)
+      (define-key c-mode-map [f3] `ag-project-regexp)
+      (define-key c-mode-map [f4] `counsel-imenu)
+      (let ((bufname (buffer-file-name)))
+        ;;(message (format "The buffer is %s" bufname))
+        (when bufname
+          (cond
+           ((string-match "/denist/" bufname)
+            (c-set-style "redline")
 
-      (add-to-list 'c-style-alist
-                   '("redline"
-                     (indent-tabs-mode . nil)
-                     (setq mode-name "Redline C Style")
-                     (c-basic-offset . 5)
-                     (c-basic-indent . 5)))
-      (add-to-list 'c-style-alist
-                   '("dtranche"
-                     (indent-tabs-mode . nil)
-                     (setq mode-name "dtranche C Style")
-                     (c-basic-offset . 2)
-                     (c-basic-indent . 2)))
-      ;; move to redline mode
-      (setq compile-history
-            '("make -j 32 server_check_native"
-              "make -j 32 server_fast_native"
-              "make -j 32 server_rpm_native"
-              "make -j 32 server_clean_native"
-              "make -j 32 clean")))
+            (message "Redline c-style"))
+           ((string-match "/denistranchemontagne" bufname)
+            (c-set-style "dtranche")
+            (message "dtranche c-style"))
+           (t
+            (c-set-style "k&r")
+            (message "k&r cstyle"))))))
+    :config
+    (add-hook 'c-mode-common-hook 'my-c-mode-hook)
+    (modify-syntax-entry ?_ "w" c-mode-syntax-table)
+    (add-to-list 'c-style-alist
+                 '("redline"
+                   (indent-tabs-mode . nil)
+                   (setq mode-name "Redline C Style")
+                   (c-basic-offset . 5)
+                   (c-basic-indent . 5)))
+    (add-to-list 'c-style-alist
+                 '("dtranche"
+                   (indent-tabs-mode . nil)
+                   (setq mode-name "dtranche C Style")
+                   (c-basic-offset . 2)
+                   (c-basic-indent . 2)))
+    ;; move to redline mode
+    (setq compile-history
+          '("make -j 32 server_check_native"
+            "make -j 32 server_fast_native"
+            "make -j 32 server_rpm_native"
+            "make -j 32 server_debug_rhel7_x86_64 USE_SANITIZE=0"
+            "make -j 32 server_rpm_rhel7_x86_64 USE_SANITIZE=0"
+            "make -j 32 server_debug_rhel6_x86_64 USE_SANITIZE=0"
+            "make -j 32 server_rpm_rhel6_x86_64 USE_SANITIZE=0"
+            "git clean -fd"
+            "make -j 32 clean")))
 
 #+end_src
 
 * Packages
-To execute the block of code use org-babel-execute-src-block
-To switch to editing mode C-c ' (single quote)
 ** auto-complete
 #+begin_src emacs-lisp
   (use-package auto-complete
-    :diminish auto-complet-mode
-    :config (ac-config-default))
+    :diminish auto-complete-mode
+    :bind (:map ac-complete-mode-map (("C-n" . ac-next)
+                                      ("C-p" . ac-previous)))
+    :init
+    (progn
+      (ac-config-default)
+      (global-auto-complete-mode t)))
 #+end_src
 
 ** ag
@@ -148,9 +206,11 @@ To switch to editing mode C-c ' (single quote)
 #+end_src
 
 ** Org
+To execute the block of code use org-babel-execute-src-block
+To switch to editing mode C-c ' (single quote)
 #+begin_src emacs-lisp
   (use-package org
-    :bind ([f3] . org-babel-execute-src-block)
+    :bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
   )
   (use-package org-bullets
     :after org
@@ -160,21 +220,25 @@ To switch to editing mode C-c ' (single quote)
 
 ** projectile
 #+begin_src emacs-lisp
-  (use-package projectile)
+  (use-package projectile
+   :init
+   (setq projectile-enable-caching t)
+   (setq projectile_file_exists_local_cache_expire (* 5 60))
+   :bind (:map projectile-mode-map ("C-x C-f" . counsel-projectile-find-file))
+  )
 #+end_src
 
 ** xcscope
-#+begin_src emacs-lisp
-  (use-package xcscope
-    :bind
-    (([f5] . cscope-find-global-definition)
-     ([f6] . cscope-find-this-symbol)
-     ([shift f6] . cscope-find-this-text-string))
-    )
-#+end_src
+# #+begin_src emacs-lisp
+#   (use-package xcscope
+#     :bind
+#     (([f5] . cscope-find-global-definition)
+#      ([f6] . cscope-find-this-symbol)
+#      ([shift f6] . cscope-find-this-text-string))
+#     )
+# #+end_src
 
-** ivy
-Trying to switch from helm to ivy -- ivy is simpler
+** swiper, ivy et. al- ivy is simpler
 #+begin_src emacs-lisp
   (use-package counsel
     :ensure t
@@ -189,16 +253,15 @@ Trying to switch from helm to ivy -- ivy is simpler
     :diminish (ivy-mode)
     :bind (("C-x b" . ivy-switch-buffer)
            ([f1] . swiper)
-           ("C-x C-f" . counsel-projectile-find-file)
-           ("C-f" . find-file)
            (:map minibuffer-local-map
                  ([f10] . ivy-next-line)
                  ([shift-f10] . ivy-previous-line)))
     :config
-    (ivy-mode 1)
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-display-style 'fancy))
-
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (setq ivy-format-function 'ivy-format-function-arrow)
+      )
 
   (use-package swiper
     :ensure t
@@ -207,22 +270,39 @@ Trying to switch from helm to ivy -- ivy is simpler
            ("C-c C-r"  . ivy-resume)
            ("M-x"      . counsel-M-x))
     :config
-    (progn
-      (ivy-mode 1)
-      (setq ivy-use-virtual-buffers t)
-      (setq ivy-display-style 'fancy)
       (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-      ))
+      )
 
+  (use-package avy
+    :ensure t
+    :init (setq avy-background t)
+    :bind ("M-s" . avy-goto-word-or-subword-1))
 #+end_src
 
-#+RESULTS:
-
-* Things to test
+# #+RESULTS
+** ace
 #+begin_src emacs-lisp
-    ;; this is just a test package didn't work
-    (use-package nyan-mode
-      :ensure nil)
-    (use-package ace-jump-mode
-      :ensure nil)
+  (use-package ace-window
+    :ensure t
+    :bind ("C-x o" . 'ace-window))
 #+end_src
+** linenum
+#+begin_src emacs-lisp
+;;  (use-package linum-mode
+;;    :init (setq linenum-format "%d "))
+#+end_src
+* Stuff to add
+# (define-key ac-complete-mode-map (kbd "C-n") 'ac-next)
+
+# (define-key ac-complete-mode-map (kbd "C-p") 'ac-previous)
+
+# * Things to test
+# #+begin_src emacs-lisp
+#     ;; this is just a test package didn't work
+#     (use-package nyan-mode
+#       :disabled
+#       :ensure nil)
+#     (use-package ace-jump-mode
+#       :disabled
+#       :ensure nil)
+# #+end_src
