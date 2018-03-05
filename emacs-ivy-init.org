@@ -213,9 +213,9 @@ To switch to editing mode C-c ' (single quote)
     :bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
   )
   (use-package org-bullets
-    :after org
-    :config
-    (org-bullets-mode 1))
+    :ensure t
+    :init (add-hook 'org-mode-hook 'org-bullets-mode))
+
 #+end_src
 
 ** projectile
@@ -261,6 +261,20 @@ To switch to editing mode C-c ' (single quote)
       (setq ivy-use-virtual-buffers t)
       (setq ivy-display-style 'fancy)
       (setq ivy-format-function 'ivy-format-function-arrow)
+      (defun my-ivy-kill-buffer (buf)
+        (interactive)
+        (if (get-buffer buf)
+        (kill-buffer buf)
+        (setq recentf-list (delete (cdr (assoc buf ivy--virtual-buffers)) recentf-list))))
+
+      (ivy-set-actions
+       'ivy-switch-buffer
+       '(("k"
+          (lambda (x)
+            (my-ivy-kill-buffer x)
+            (ivy--reset-state ivy-last))
+          "kill"
+          )))
       )
 
   (use-package swiper
