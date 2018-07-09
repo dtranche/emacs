@@ -44,7 +44,6 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   (setq inhibit-startup-message -1)
   (setq-default tab-width 2)
   (setq-default indent-tabs-mode -1)
-  (setq tramp-default-method "ssh")
   (setq linenum-format "%d ")
   (line-number-mode t)
   (column-number-mode t)
@@ -60,21 +59,16 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
 
 * Custom Functions
 #+begin_src emacs-lisp
-     (defun match-paren (arg)
-       "Go to the matching paren if on a paren; otherwise insert %."
-         (interactive "p")
-           (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-                 ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-                 (t (self-insert-command (or arg 1)))))
-   (defun prada ()
-     (interactive)
-     (find-file "/scp:denist@prada:/home/denist/working_dir"))
+  (defun match-paren (arg)
+     "Go to the matching paren if on a paren; otherwise insert %."
+     (interactive "p")
+       (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+             ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+             (t (self-insert-command (or arg 1)))))
 
-  ;; (defun my-find-file( )
-  ;;     (interactive)
-  ;;     (if (projectile-project-p)
-  ;;         (counsel-projectile-find-file)
-  ;;      (find-file)))
+  (defun prada ()
+     (interactive)
+     (find-file "/ssh:denist@prada:/home/denist/working_dir"))
 
   (defun get-point ( symbol &optional arg )
     "get the point"
@@ -99,6 +93,61 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   (global-set-key (kbd "C-b") 'copy-word)
 
 #+end_src
+
+better move to beginning of line
+#+BEGIN_SRC emacs-lisp
+  (defun smarter-move-beginning-of-line (arg)
+    "Move point back to indentation of beginning of line.
+
+    Move point to the first non-whitespace character on this line.
+    If point is already there, move to the beginning of the line.
+    Effectively toggle between the first non-whitespace character and
+    the beginning of the line.
+
+    If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+    point reaches the beginning or end of the buffer, stop there."
+    (interactive "^p")
+    (setq arg (or arg 1))
+
+    ;; Move lines first
+    (when (/= arg 1)
+      (let ((line-move-visual nil))
+    (forward-line (1- arg))))
+
+    (let ((orig-point (point)))
+     (back-to-indentation)
+     (when (= orig-point (point))
+      (move-beginning-of-line 1))))
+
+  (global-set-key [remap move-beginning-of-line]
+                   'smarter-move-beginning-of-line)
+
+#+END_SRC
+
+remote shell
+#+BEGIN_SRC emacs-lisp
+  (defun remote-shell (&optional host)
+    "Open a remote shell to a host."
+    (interactive)
+    (with-temp-buffer
+      (let ((host (if host host (read-string "Host: "))))
+        (cd (concat "/ssh:denist@" host ":"))
+        (shell (concat "*" host "*")))))
+
+  (defun prada-shell ()
+    (interactive)
+    (remote-shell "prada"))
+#+END_SRC
+
+align whitespace
+#+BEGIN_SRC emacs-lisp
+(defun align-whitespace (start end)
+  "Align columns by whitespace"
+  (interactive "r")
+  (align-regexp start end
+                "\\(\\s-*\\)\\s-" 1 0 t))
+#+END_SRC
+
 
 #+RESULTS:
 : copy-word
@@ -305,6 +354,14 @@ To switch to editing mode C-c ' (single quote)
 ;;  (use-package linum-mode
 ;;    :init (setq linenum-format "%d "))
 #+end_src
+** ediff
+	 #+begin_src emacs-lisp
+  (use-package ediff
+    :config
+    (setq ediff-split-window-function 'split-window-horizontally)
+    (setq ediff-window-setup-function 'ediff-setup-windows-plain))
+	 #+end_src
+
 * Stuff to add
 # (define-key ac-complete-mode-map (kbd "C-n") 'ac-next)
 
