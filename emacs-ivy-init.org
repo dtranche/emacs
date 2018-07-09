@@ -57,6 +57,15 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
 
 #+end_src
 
+* Appearance
+Just a simple light brown theme
+#+begin_src emacs-lisp
+  (use-package alect-themes
+    :ensure t
+    :config
+    ( load-theme 'alect-light-alt t))
+ #+end_src
+
 * Custom Functions
 #+begin_src emacs-lisp
   (defun match-paren (arg)
@@ -223,10 +232,10 @@ align whitespace
           '("make -j 32 server_check_native"
             "make -j 32 server_fast_native"
             "make -j 32 server_rpm_native"
-            "make -j 32 server_debug_rhel7_x86_64 USE_SANITIZE=0"
-            "make -j 32 server_rpm_rhel7_x86_64 USE_SANITIZE=0"
-            "make -j 32 server_debug_rhel6_x86_64 USE_SANITIZE=0"
-            "make -j 32 server_rpm_rhel6_x86_64 USE_SANITIZE=0"
+            "make -j 32 server_debug_rhel7_x86_64"
+            "make -j 32 server_rpm_rhel7_x86_64"
+            "make -j 32 server_debug_rhel6_x86_64"
+            "make -j 32 server_rpm_rhel6_x86_64"
             "git clean -fd"
             "make -j 32 clean")))
 
@@ -269,12 +278,12 @@ To switch to editing mode C-c ' (single quote)
 
 ** projectile
 #+begin_src emacs-lisp
-  (use-package projectile
-   :init
-   (setq projectile-enable-caching t)
-   (setq projectile_file_exists_local_cache_expire (* 5 60))
-   :bind (:map projectile-mode-map ("C-x C-f" . counsel-projectile-find-file))
-  )
+  ;; (use-package projectile
+  ;;  :init
+  ;;  (setq projectile-enable-caching t)
+  ;;  (setq projectile_file_exists_local_cache_expire (* 5 60))
+  ;;  :bind (:map projectile-mode-map ("C-x C-f" . counsel-projectile-find-file))
+  ;; )
 #+end_src
 
 ** xcscope
