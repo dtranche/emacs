@@ -195,7 +195,7 @@ align whitespace
     (defun my-c-mode-hook()
       (which-function-mode 1)
       (message "In my-c-mode-hook")
-      (projectile-mode 1)
+;;      (projectile-mode 1)
       (define-key c-mode-map [f3] `ag-project-regexp)
       (define-key c-mode-map [f4] `counsel-imenu)
       (let ((bufname (buffer-file-name)))
@@ -298,57 +298,59 @@ To switch to editing mode C-c ' (single quote)
 
 ** swiper, ivy et. al- ivy is simpler
 #+begin_src emacs-lisp
-  (use-package counsel
-    :ensure t
-  ;;  :bind
-  ;;  (("M-y" . counsel-yank-pop)
-  ;;   :map ivy-minibuffer-map
-  ;;    ("M-y" . ivy-next-line)))
-  )
-
-  (use-package ivy
-    :ensure t
-    :diminish (ivy-mode)
-    :bind (("C-x b" . ivy-switch-buffer)
-           ([f1] . swiper)
-           (:map minibuffer-local-map
-                 ([f10] . ivy-next-line)
-                 ([shift-f10] . ivy-previous-line)))
-    :config
-      (ivy-mode 1)
-      (setq ivy-use-virtual-buffers t)
-      (setq ivy-display-style 'fancy)
-      (setq ivy-format-function 'ivy-format-function-arrow)
-      (defun my-ivy-kill-buffer (buf)
-        (interactive)
-        (if (get-buffer buf)
-        (kill-buffer buf)
-        (setq recentf-list (delete (cdr (assoc buf ivy--virtual-buffers)) recentf-list))))
-
-      (ivy-set-actions
-       'ivy-switch-buffer
-       '(("k"
-          (lambda (x)
-            (my-ivy-kill-buffer x)
-            (ivy--reset-state ivy-last))
-          "kill"
-          )))
+    (use-package counsel
+      :ensure t
+      :bind
+      ("C-x C-f" . counsel-git)
+      ;;  (("M-y" . counsel-yank-pop)
+      ;;   :map ivy-minibuffer-map
+      ;;    ("M-y" . ivy-next-line)))
       )
 
-  (use-package swiper
-    :ensure t
-    :bind (("C-s"      . swiper)
-           ("C-r"      . swiper)
-           ("C-c C-r"  . ivy-resume)
-           ("M-x"      . counsel-M-x))
-    :config
-      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-      )
+    (use-package ivy
+      :ensure t
+      :diminish (ivy-mode)
+      :bind (("C-x b" . ivy-switch-buffer)
+             ([f1] . swiper)
+             (:map minibuffer-local-map
+                   ([f10] . ivy-next-line)
+                   ([shift-f10] . ivy-previous-line)))
+      :config
+        (ivy-mode 1)
+        (setq ivy-use-virtual-buffers t)
+        (setq ivy-display-style 'fancy)
+        (setq ivy-format-function 'ivy-format-function-arrow)
+        (setq ivy-initial-inputs-alist nil)
+        (defun my-ivy-kill-buffer (buf)
+          (interactive)
+          (if (get-buffer buf)
+          (kill-buffer buf)
+          (setq recentf-list (delete (cdr (assoc buf ivy--virtual-buffers)) recentf-list))))
 
-  (use-package avy
-    :ensure t
-    :init (setq avy-background t)
-    :bind ("M-s" . avy-goto-word-or-subword-1))
+        (ivy-set-actions
+         'ivy-switch-buffer
+         '(("k"
+            (lambda (x)
+              (my-ivy-kill-buffer x)
+              (ivy--reset-state ivy-last))
+            "kill"
+            )))
+        )
+
+    (use-package swiper
+      :ensure t
+      :bind (("C-s"      . swiper)
+             ("C-r"      . swiper)
+             ("C-c C-r"  . ivy-resume)
+             ("M-x"      . counsel-M-x))
+      :config
+        (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+        )
+
+    (use-package avy
+      :ensure t
+      :init (setq avy-background t)
+      :bind ("M-s" . avy-goto-word-or-subword-1))
 #+end_src
 
 # #+RESULTS
