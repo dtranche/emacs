@@ -55,6 +55,9 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   ;; because I hate trailing whitespace
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+  ;; not sure where to put this yet
+  (setq load-path (cons "/home/denist/bin/" load-path))
+
 #+end_src
 
 * Appearance
