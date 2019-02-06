@@ -58,6 +58,7 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   ;; not sure where to put this yet
   (setq load-path (cons "/home/denist/bin/" load-path))
 
+  (add-to-list 'auto-mode-alist '("\\.cc\\'" . c-mode ))
 #+end_src
 
 * Appearance
