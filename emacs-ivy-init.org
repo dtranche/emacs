@@ -11,6 +11,8 @@ use-package is described here [[https://github.com/jwiegley/use-package]]
 I've taken liberally from lots of sources on the web.  I may try to link some more
 here.
 
+C-c ' -- for org babel
+
 * Enable Use-package
 #+begin_src emacs-lisp :tangle yes
 ;; Put your whole init here
@@ -59,15 +61,17 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
   (setq load-path (cons "/home/denist/bin/" load-path))
 
   (add-to-list 'auto-mode-alist '("\\.cc\\'" . c-mode ))
+  (add-to-list 'auto-mode-alist '("ratts\/scripts" . python-mode))
+
 #+end_src
 
 * Appearance
 Just a simple light brown theme
 #+begin_src emacs-lisp
-  (use-package alect-themes
-    :ensure t
-    :config
-    ( load-theme 'alect-light-alt t))
+  ;; (use-package alect-themes
+  ;;   :ensure t
+  ;;   :config
+  ;;   ( load-theme 'alect-light-alt t))
  #+end_src
 
 * Custom Functions
@@ -104,6 +108,11 @@ Just a simple light brown theme
     )
 
   (global-set-key (kbd "C-b") 'copy-word)
+
+  (require 'ansi-color)
+  (defun my/ansi-colorize-buffer ()
+    (let ((buffer-read-only nil))
+      (ansi-color-apply-on-region (point-min) (point-max))))
 
 #+end_src
 
@@ -167,25 +176,27 @@ align whitespace
 :
 * Global Key Bindings
 #+begin_src emacs-lisp
-      ;; Key mappings that aren't source specific
-      ;; I don't know what I'd do with out this one
-      (define-key global-map "\C-xg" 'goto-line)
-      (define-key global-map [delete] 'delete-char)
-      (define-key global-map [backspace] 'delete-backward-char)
-      (define-key global-map [end] 'end-of-line )
-      (global-unset-key [f10] )
-      (define-key global-map [f2] 'undo)
-      (define-key global-map [f10] 'next-error)
+  ;; Key mappings that aren't source specific
+  ;; I don't know what I'd do with out this one
+  (define-key global-map "\C-xg" 'magit-status)
+  (define-key global-map [delete] 'delete-char)
+  (define-key global-map [backspace] 'delete-backward-char)
+  (define-key global-map [end] 'end-of-line )
+  (global-unset-key [f10] )
 
-      (global-set-key [remap forward-word] 'forward-symbol)
+  (define-key global-map [f1] 'goto-line)
+  (define-key global-map [f2] 'undo)
+  (define-key global-map [f10] 'next-error)
+  (define-key global-map "\C-w" 'backword-kill-word)
+  (global-set-key [remap forward-word] 'forward-symbol)
 
-      ;;(define-key c-mode-base-map [f3] 'ag-project)
-      (define-key global-map "\C-f" 'find-file)
-      (global-set-key "%" 'match-paren)
-      (when (display-graphic-p)
-        (define-key global-map "\M-w" 'kill-ring-save)
-        (if (eq system-type 'darwin)
-            (setq mac-command-modifier 'meta)))
+  ;;(define-key c-mode-base-map [f3] 'ag-project)
+  (define-key global-map "\C-f" 'find-file)
+  (global-set-key "%" 'match-paren)
+  (when (display-graphic-p)
+    (define-key global-map "\M-w" 'kill-ring-save)
+    (if (eq system-type 'darwin)
+        (setq mac-command-modifier 'meta)))
 
 
 #+end_src
@@ -199,7 +210,6 @@ align whitespace
     (defun my-c-mode-hook()
       (which-function-mode 1)
       (message "In my-c-mode-hook")
-;;      (projectile-mode 1)
       (define-key c-mode-map [f3] `ag-project-regexp)
       (define-key c-mode-map [f4] `counsel-imenu)
       (let ((bufname (buffer-file-name)))
@@ -280,15 +290,6 @@ To switch to editing mode C-c ' (single quote)
 
 #+end_src
 
-** projectile
-#+begin_src emacs-lisp
-  ;; (use-package projectile
-  ;;  :init
-  ;;  (setq projectile-enable-caching t)
-  ;;  (setq projectile_file_exists_local_cache_expire (* 5 60))
-  ;;  :bind (:map projectile-mode-map ("C-x C-f" . counsel-projectile-find-file))
-  ;; )
-#+end_src
 
 ** xcscope
 # #+begin_src emacs-lisp
@@ -315,7 +316,7 @@ To switch to editing mode C-c ' (single quote)
       :ensure t
       :diminish (ivy-mode)
       :bind (("C-x b" . ivy-switch-buffer)
-             ([f1] . swiper)
+             ;;([f1] . swiper)
              (:map minibuffer-local-map
                    ([f10] . ivy-next-line)
                    ([shift-f10] . ivy-previous-line)))
@@ -376,6 +377,60 @@ To switch to editing mode C-c ' (single quote)
     (setq ediff-split-window-function 'split-window-horizontally)
     (setq ediff-window-setup-function 'ediff-setup-windows-plain))
 	 #+end_src
+** magit
+   #+begin_src emacs-lisp
+     (use-package magit
+       :ensure t
+       :bind
+       ("C-x g" . magit-status))
+   #+end_src
+** which-key
+   #+begin_src emacs-lisp
+     (use-package which-key
+       :ensure t
+       :diminish (which-key-mode))
+	 #+end_src
+
+* Hydras
+Try and make my use of emacs more efficient
+** movement-hydra
+#+begin_src emacs-lisp
+  (nlinum-relative-mode)
+  (global-set-key
+   (kbd "C-n")
+   (defhydra hydra-move
+     (:pre (nlinum-mode 1)
+      :post (nlinum-mode -1))
+     "move"
+     ("n" next-line "down")
+     ("p" previous-line "up")
+     ("f" forward-char "forward")
+     ("b" backward-char "back")
+     ("a" beginning-of-line "start of line")
+     ("B" beginning-of-defun "start of func")
+     ("E" end-of-defun "end of func")
+     ("e" move-end-of-line "end of line")
+     ("g" goto-line "goto-line")
+     ("v" scroll-up-command)
+     ;; Converting M-v to V here by analogy.
+     ("V" scroll-down-command)
+     ("l" recenter-top-bottom)
+     ("q" nil )))
+#+end_src
+** ggtags-hydra
+#+begin_src emacs-lisp
+(global-set-key
+ (kbd "C-t")
+ (defhydra hydra-tags
+	 (:pre (ggtags-mode 1 ) )
+	 "gtags"
+	 ("." ggtags-find-tag-dwim "dwim")
+	 ("d" ggtags-find-definition "definition")
+	 ("f" ggtags-find-file "file")
+	 ("r" ggtags-find-reference "ref.")
+	 ("x" ggtags-find-tag-regexp "regex")
+	 ("q" nil)))
+#+end_src
 
 * Stuff to add
 # (define-key ac-complete-mode-map (kbd "C-n") 'ac-next)
@@ -392,3 +447,11 @@ To switch to editing mode C-c ' (single quote)
 #       :disabled
 #       :ensure nil)
 # #+end_src
+# USE WHEN THE COMPILATION BUFFER GETS MESSED UP
+# (require 'ansi-color)
+# (defun my/ansi-colorize-buffer ()
+#   (let ((buffer-read-only nil))
+#     (ansi-color-apply-on-region (point-min) (point-max))))
+	# (add-hook 'compilation-filter-hook 'my/ansi-colorize-buffer)
+
+* Removed
