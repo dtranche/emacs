@@ -464,27 +464,27 @@ To switch to editing mode C-c ' (single quote)
 Try and make my use of emacs more efficient
 ** movement-hydra
 #+begin_src emacs-lisp
-	(nlinum-relative-mode)
-	(global-set-key
-	 (kbd "C-;")
-	 (defhydra hydra-move
-		 (:pre (nlinum-mode 1)
-			:post (nlinum-mode -1))
-		 "move"
-		 ("n" next-line "down")
-		 ("p" previous-line "up")
-		 ("f" forward-char "forward")
-		 ("b" backward-char "back")
-		 ("a" beginning-of-line "start of line")
-		 ("B" beginning-of-defun "start of func")
-		 ("E" end-of-defun "end of func")
-		 ("e" move-end-of-line "end of line")
-		 ("g" goto-line "goto-line")
-		 ("v" scroll-up-command)
-		 ;; Converting M-v to V here by analogy.
-		 ("V" scroll-down-command)
-		 ("l" recenter-top-bottom)
-		 ("q" nil )))
+  (linum-relative-mode)
+  (global-set-key
+   (kbd "C-n")
+   (defhydra hydra-move
+     (:pre (nlinum-mode 1)
+      :post (nlinum-mode -1))
+     "move"
+     ("n" next-line "down")
+     ("p" previous-line "up")
+     ("f" forward-char "forward")
+     ("b" backward-char "back")
+     ("a" beginning-of-line "start of line")
+     ("B" beginning-of-defun "start of func")
+     ("E" end-of-defun "end of func")
+     ("e" move-end-of-line "end of line")
+     ("g" goto-line "goto-line")
+     ("v" scroll-up-command)
+     ;; Converting M-v to V here by analogy.
+     ("V" scroll-down-command)
+     ("l" recenter-top-bottom)
+     ("q" nil )))
 #+end_src
 ** ggtags-hydra
 #+begin_src emacs-lisp
