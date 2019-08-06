@@ -179,11 +179,14 @@ align whitespace
   ;; Key mappings that aren't source specific
   ;; I don't know what I'd do with out this one
   (define-key global-map "\C-xg" 'magit-status)
+
   (define-key global-map [delete] 'delete-char)
   (define-key global-map [backspace] 'delete-backward-char)
   (define-key global-map [end] 'end-of-line )
   (global-unset-key [f10] )
-
+  (define-key global-map "\C-w" 'backword-kill-word)
+  (define-key global-map "\C-x\C-k" 'kill-region)
+  (define-key global-map "\C-x\C-m" 'execute-extended-command)
   (define-key global-map [f1] 'goto-line)
   (define-key global-map [f2] 'undo)
   (define-key global-map [f10] 'next-error)
@@ -197,7 +200,6 @@ align whitespace
     (define-key global-map "\M-w" 'kill-ring-save)
     (if (eq system-type 'darwin)
         (setq mac-command-modifier 'meta)))
-
 
 #+end_src
 
