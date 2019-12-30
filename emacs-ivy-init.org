@@ -11,7 +11,7 @@ use-package is described here [[https://github.com/jwiegley/use-package]]
 I've taken liberally from lots of sources on the web.  I may try to link some more
 here.
 
-C-c ' -- for org babel
+(\C-c ') -- for org babel
 
 * Enable Use-package
 #+begin_src emacs-lisp :tangle yes
@@ -28,40 +28,58 @@ C-c ' -- for org babel
   (defvar user (getenv "USER"))
 #+end_src
 
+
 * Set Customization Files
 #+begin_src emacs-lisp
   (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
   (load custom-file)
 #+end_src
-
+* Time Startup
+#+begin_src emacs-lisp
+	(add-hook 'emacs-startup-hook
+		 (lambda ()
+			 (message "Emacs ready in %s with %d garbage collections."
+				 (format "%.2f seconds"
+					 (float-time
+						 (time-subtract after-init-time before-init-time)))
+			gcs-done)))
+#+end_src
 * Sane Defaults
 Emacs needs some tweeking out of the box. This will get some of the annoyances gone.
 #+begin_src emacs-lisp
-  (setenv "PATH"
-          (concat "/opt/redline/inrush/examples"
-                  (getenv "PATH")))
-  ;; don't need a tool-bar
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (setq inhibit-startup-message -1)
-  (setq-default tab-width 2)
-  (setq-default indent-tabs-mode -1)
-  (setq linenum-format "%d ")
-  (line-number-mode t)
-  (column-number-mode t)
-  (xterm-mouse-mode t)
-  ;;S-Up S-Down S-Left S-Right
-  (windmove-default-keybindings)
+	(setenv "PATH"
+					(concat "/opt/redline/inrush/examples"
+									(getenv "PATH")))
+	;; don't need a tool-bar
+	(tool-bar-mode -1)
+	(scroll-bar-mode -1)
+	(setq inhibit-startup-message -1)
+	(setq-default tab-width 2)
+	(setq-default indent-tabs-mode -1)
+	(setq linenum-format "%d ")
+	(line-number-mode t)
+	(column-number-mode t)
+	(xterm-mouse-mode t)
+	;;S-Up S-Down S-Left S-Right
+	(windmove-default-keybindings)
 
-  (fset 'yes-or-no-p 'y-or-n-p)
-  ;; because I hate trailing whitespace
-  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+	(fset 'yes-or-no-p 'y-or-n-p)
+	;; because I hate trailing whitespace
+	(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
-  ;; not sure where to put this yet
-  (setq load-path (cons "/home/denist/bin/" load-path))
+	;; not sure where to put this yet
+	(setq load-path (cons "/home/denist/bin/" load-path))
 
-  (add-to-list 'auto-mode-alist '("\\.cc\\'" . c-mode ))
-  (add-to-list 'auto-mode-alist '("ratts\/scripts" . python-mode))
+	(add-to-list 'auto-mode-alist '("\\.cc\\'" . c-mode ))
+	(add-to-list 'auto-mode-alist '("ratts\/scripts" . python-mode))
+	(add-to-list 'auto-mode-alist '("makefiles\/" . makefile-mode))
+	(setq compile-history
+						'("make -j 32 server_debug_rhel7_x86_64"
+							"make -j 32 server_rpm_rhel7_x86_64"
+							"make -j 8 server_debug_native"
+							"make -j 8 server_rpm_native"
+							"git clean -fd"
+							"make -j 32 clean"))
 
 #+end_src
 
@@ -74,46 +92,88 @@ Just a simple light brown theme
   ;;   ( load-theme 'alect-light-alt t))
  #+end_src
 
+Use an improved simple modeline
+#+begin_src emacs-lisp
+	(setq-default mode-line-format
+				'(
+					;; add a noticeable red block that says 'READ ONLY' when the file's, er, read only
+					(:eval
+					 (when (eql buffer-read-only t)
+							 ;; propertize adds metadata to text, so you can add colours and formatting, amongst other things
+							 (propertize " READ ONLY " 'face
+													 '(:background "color-88" :foreground "white" :weight bold))))
+					;; show the buffer filename, with a green background when unmodified/saved and a red one when modified
+					(:eval
+					 (propertize " %b " 'face
+											 (if (buffer-modified-p)
+													 '(:background "red" :foreground "white" :weight bold)
+												 '(:background "green" :foreground "black" :weight bold))))
+					;; show the current major mode in use (use obsolete format because trailing spaces nice it up)
+					(:propertize " %m " face (:background "grey"))
+					;; show the current branch and VCS in use, if there is one
+					(:propertize (vc-mode vc-mode) face (:weight normal))
+					" "
+					;; show the function
+					mode-line-misc-info
+					" "
+					mode-line-process
+					" "
+					;; show the line number and column number (no 'All', 'Top', 'Bottom', etc.)
+					(:propertize " %l:%c " face (:background "blue" :foreground "white" :weight light))))
+#+end_src
+
+In certain cases compile output gets messy, this fixes that
+#+begin_src emacs-lisp
+(require 'ansi-color)
+(defun my/ansi-colorize-buffer ()
+(let ((buffer-read-only nil))
+     (ansi-color-apply-on-region (point-min) (point-max))))
+ (add-hook 'compilation-filter-hook 'my/ansi-colorize-buffer)
+
+#+end_src
 * Custom Functions
 #+begin_src emacs-lisp
-  (defun match-paren (arg)
-     "Go to the matching paren if on a paren; otherwise insert %."
-     (interactive "p")
-       (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-             ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-             (t (self-insert-command (or arg 1)))))
+		(defun match-paren (arg)
+			 "Go to the matching paren if on a paren; otherwise insert %."
+			 (interactive "p")
+				 (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+							 ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+							 (t (self-insert-command (or arg 1)))))
 
-  (defun prada ()
-     (interactive)
-     (find-file "/ssh:denist@prada:/home/denist/working_dir"))
+		(defun prada ()
+			 (interactive)
+			 (find-file "/ssh:denist@prada:/home/denist/working_dir"))
 
-  (defun get-point ( symbol &optional arg )
-    "get the point"
-    (funcall symbol arg )
-    (point)
-    )
+		(defun get-point ( symbol &optional arg )
+			"get the point"
+			(funcall symbol arg )
+			(point)
+			)
 
-  (defun copy-thing ( begin-of-thing end-of-thing &optional arg )
-    "copy thing between beg & end into kill ring"
-    (save-excursion
-      (let ((beg (get-point begin-of-thing 1))
-            (end (get-point end-of-thing arg)))
-        (copy-region-as-kill beg end)))
-    )
+		(defun copy-thing ( begin-of-thing end-of-thing &optional arg )
+			"copy thing between beg & end into kill ring"
+			(save-excursion
+				(let ((beg (get-point begin-of-thing 1))
+							(end (get-point end-of-thing arg)))
+					(copy-region-as-kill beg end)))
+			)
 
-  (defun copy-word (&optional arg)
-    "Copy words at point into kill-ring"
-    (interactive "P")
-    (copy-thing 'backward-word 'forward-word arg)
-    )
+		(defun copy-word (&optional arg)
+			"Copy words at point into kill-ring"
+			(interactive "P")
+			(copy-thing 'backward-word 'forward-word arg)
+			)
 
-  (global-set-key (kbd "C-b") 'copy-word)
+		;;(global-set-key (kbd "C-b") 'copy-word)
 
-  (require 'ansi-color)
-  (defun my/ansi-colorize-buffer ()
-    (let ((buffer-read-only nil))
-      (ansi-color-apply-on-region (point-min) (point-max))))
+		(require 'ansi-color)
+		(defun my/ansi-colorize-buffer ()
+			(let ((buffer-read-only nil))
+				(ansi-color-apply-on-region (point-min) (point-max))))
 
+		(defun my/buffer-file-name ()
+			(interactive)
+			(message (buffer-file-name)))
 #+end_src
 
 better move to beginning of line
@@ -176,30 +236,38 @@ align whitespace
 :
 * Global Key Bindings
 #+begin_src emacs-lisp
-  ;; Key mappings that aren't source specific
-  ;; I don't know what I'd do with out this one
-  (define-key global-map "\C-xg" 'magit-status)
+		;; Key mappings that aren't source specific
+		;; I don't know what I'd do with out this one
+		(define-key global-map "\C-xg" 'magit-status)
 
-  (define-key global-map [delete] 'delete-char)
-  (define-key global-map [backspace] 'delete-backward-char)
-  (define-key global-map [end] 'end-of-line )
-  (global-unset-key [f10] )
-  (define-key global-map "\C-w" 'backword-kill-word)
-  (define-key global-map "\C-x\C-k" 'kill-region)
-  (define-key global-map "\C-x\C-m" 'execute-extended-command)
-  (define-key global-map [f1] 'goto-line)
-  (define-key global-map [f2] 'undo)
-  (define-key global-map [f10] 'next-error)
-  (define-key global-map "\C-w" 'backword-kill-word)
-  (global-set-key [remap forward-word] 'forward-symbol)
+		(define-key global-map [delete] 'delete-char)
+		(define-key global-map [backspace] 'delete-backward-char)
+		(define-key global-map [end] 'end-of-line )
+		(global-unset-key [f10] )
+	;;	(global-unset-key "\C-/")
+		(global-set-key "\C-w" 'backward-kill-word)
+		(global-set-key "\C-xk" 'kill-region)
+		(define-key global-map "\C-x\C-m" 'execute-extended-command)
+		(define-key global-map "\C-x\C-x" 'kill-this-buffer)
 
-  ;;(define-key c-mode-base-map [f3] 'ag-project)
-  (define-key global-map "\C-f" 'find-file)
-  (global-set-key "%" 'match-paren)
-  (when (display-graphic-p)
-    (define-key global-map "\M-w" 'kill-ring-save)
-    (if (eq system-type 'darwin)
-        (setq mac-command-modifier 'meta)))
+		(define-key global-map [f1] 'goto-line)
+		(define-key global-map [f2] 'undo)
+		(define-key global-map [f5] 'my/buffer-file-name)
+		(define-key global-map [f6] 'eval-expression)
+
+		(define-key global-map [f10] 'next-error)
+		(define-key global-map [f11] 'previous-error)
+		(global-set-key [remap forward-word] 'forward-symbol)
+		(global-set-key [remap backward-word] 'backward-symbol)
+		(global-set-key "\C-f" 'forward-word)
+		(global-set-key "\C-b" 'backward-to-word)
+		(define-key global-map "\M-w" 'kill-ring-save)
+		;;(define-key c-mode-base-map [f3] 'ag-project)
+		(define-key global-map "\M-f" 'find-file)
+		(global-set-key "%" 'match-paren)
+		(when (display-graphic-p)
+			(if (eq system-type 'darwin)
+					(setq mac-command-modifier 'meta)))
 
 #+end_src
 
@@ -245,9 +313,9 @@ align whitespace
                    (c-basic-indent . 2)))
     ;; move to redline mode
     (setq compile-history
-          '("make -j 32 server_check_native"
-            "make -j 32 server_fast_native"
-            "make -j 32 server_rpm_native"
+          '("make -j 8 server_debug_native"
+            "make -j 8 server_fast_native"
+            "make -j 8 server_rpm_native"
             "make -j 32 server_debug_rhel7_x86_64"
             "make -j 32 server_rpm_rhel7_x86_64"
             "make -j 32 server_debug_rhel6_x86_64"
@@ -291,7 +359,6 @@ To switch to editing mode C-c ' (single quote)
     :init (add-hook 'org-mode-hook 'org-bullets-mode))
 
 #+end_src
-
 
 ** xcscope
 # #+begin_src emacs-lisp
@@ -397,41 +464,41 @@ To switch to editing mode C-c ' (single quote)
 Try and make my use of emacs more efficient
 ** movement-hydra
 #+begin_src emacs-lisp
-  (nlinum-relative-mode)
-  (global-set-key
-   (kbd "C-n")
-   (defhydra hydra-move
-     (:pre (nlinum-mode 1)
-      :post (nlinum-mode -1))
-     "move"
-     ("n" next-line "down")
-     ("p" previous-line "up")
-     ("f" forward-char "forward")
-     ("b" backward-char "back")
-     ("a" beginning-of-line "start of line")
-     ("B" beginning-of-defun "start of func")
-     ("E" end-of-defun "end of func")
-     ("e" move-end-of-line "end of line")
-     ("g" goto-line "goto-line")
-     ("v" scroll-up-command)
-     ;; Converting M-v to V here by analogy.
-     ("V" scroll-down-command)
-     ("l" recenter-top-bottom)
-     ("q" nil )))
+	(nlinum-relative-mode)
+	(global-set-key
+	 (kbd "C-;")
+	 (defhydra hydra-move
+		 (:pre (nlinum-mode 1)
+			:post (nlinum-mode -1))
+		 "move"
+		 ("n" next-line "down")
+		 ("p" previous-line "up")
+		 ("f" forward-char "forward")
+		 ("b" backward-char "back")
+		 ("a" beginning-of-line "start of line")
+		 ("B" beginning-of-defun "start of func")
+		 ("E" end-of-defun "end of func")
+		 ("e" move-end-of-line "end of line")
+		 ("g" goto-line "goto-line")
+		 ("v" scroll-up-command)
+		 ;; Converting M-v to V here by analogy.
+		 ("V" scroll-down-command)
+		 ("l" recenter-top-bottom)
+		 ("q" nil )))
 #+end_src
 ** ggtags-hydra
 #+begin_src emacs-lisp
-(global-set-key
- (kbd "C-t")
- (defhydra hydra-tags
-	 (:pre (ggtags-mode 1 ) )
-	 "gtags"
-	 ("." ggtags-find-tag-dwim "dwim")
-	 ("d" ggtags-find-definition "definition")
-	 ("f" ggtags-find-file "file")
-	 ("r" ggtags-find-reference "ref.")
-	 ("x" ggtags-find-tag-regexp "regex")
-	 ("q" nil)))
+  (global-set-key
+   (kbd "C-t")
+   (defhydra hydra-tags
+     (:pre (ggtags-mode 1 ) )
+     "gtags"
+     ("." ggtags-find-tag-dwim "dwim")
+     ("d" ggtags-find-definition "definition")
+     ("f" ggtags-find-file "file")
+     ("r" ggtags-find-reference "ref.")
+     ("x" ggtags-find-tag-regexp "regex")
+     ("q" nil)))
 #+end_src
 
 * Stuff to add
@@ -450,10 +517,5 @@ Try and make my use of emacs more efficient
 #       :ensure nil)
 # #+end_src
 # USE WHEN THE COMPILATION BUFFER GETS MESSED UP
-# (require 'ansi-color)
-# (defun my/ansi-colorize-buffer ()
-#   (let ((buffer-read-only nil))
-#     (ansi-color-apply-on-region (point-min) (point-max))))
-	# (add-hook 'compilation-filter-hook 'my/ansi-colorize-buffer)
 
 * Removed
