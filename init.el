@@ -4,34 +4,42 @@
 ;; You may delete these explanatory comments.
 (require 'package)
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/"))
+       '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
-
-(setq gc-cons-threshold most-positive-fixnum
-      gc-cons-percentage 0.6)
-
-;; Keep a ref to the actual file-name-handler
-(defvar default-file-name-handler-alist file-name-handler-alist)
-
-;; Set the file-name-handler to nil (because regexing is cpu intensive)
-(setq file-name-handler-alist nil)
-
-;; Reset file-name-handler-alist after initialization
-(add-hook 'emacs-startup-hook
-  (lambda ()
-    (setq gc-cons-threshold 16777216
-          gc-cons-percentage 0.1
-          file-name-handler-alist default-file-name-handler-alist)))
 
 (require 'ob-tangle)
 ;;(org-babel-load-file
 ;; (expand-file-name "emacs-init.org"
-;;		   user-emacs-directory))
+;;       user-emacs-directory))
 
 (use-package esup
-	:ensure t
-	:commands (esup))
+  :ensure t
+  :commands (esup))
 
+(add-hook 'emacs-startup-hook
+					(lambda ()
+            (message "Emacs ready in %s with %d garbage collections."
+                     (format "%.2f seconds"
+                             (float-time
+                              (time-subtract after-init-time before-init-time)))
+                     gcs-done)))
+
+;;(unless (graphic-display-p)
 (org-babel-load-file
  (expand-file-name "emacs-ivy-init.org"
-		   user-emacs-directory))
+                   user-emacs-directory))
+;;)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (iy-go-to-char org-roam command-log-mode define-word which-key use-package pdf-tools org-bullets nlinum magit linum-relative hydra ggtags ein counsel-projectile alect-themes ag ace-window))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

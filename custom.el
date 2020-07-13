@@ -5,7 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
 	 (quote
-		(esup gnu-elpa-keyring-update dired-git-info slime ivy-dired-history smex command-log-mode which-key gopher ggtags nlinum-relative ivy-hydra doom-modeline use-package pdf-tools org-bullets markdown-preview-eww markdown-mode magit hydra helm-helm-commands helm-cscope flx dracula-theme dired-sidebar counsel-projectile color-theme-sanityinc-solarized auto-complete alect-themes ag ace-window))))
+		(iy-go-to-char org-roam command-log-mode define-word which-key use-package pdf-tools org-bullets nlinum magit linum-relative hydra ggtags ein counsel-projectile alect-themes ag ace-window))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
