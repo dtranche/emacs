@@ -443,22 +443,22 @@ To switch to editing mode C-c ' (single quote)
 				'(("d" "default" plain (function org-roam-capture--get-point) "%?"
 					 :file-name "%<%Y%m%d>-${slug}"
 					 :head "#+TITLE: ${title}
-					 ,#+ROAM_TAGS:
-					 links:"
+#+ROAM_TAGS:
+links:"
 					 :unnarrowed t)
 					("b" "book" plain (function org-roam-capture--get-point) "%?"
 					 :file-name "${slug}"
 					 :head "#+TITLE: ${title}
-					 ,#+AUTHOR:
-					 ,#+ROAM_TAGS:
-					 links:"
+#+AUTHOR:
+#+ROAM_TAGS:
+links:"
 					 :unnarrowed t)
 					("o" "other" plain (function org-roam-capture--get-point) "%?"
 					 :file-name "${slug}"
 					 :head "#+TITLE: ${title}
-					 ,#+Source:
-					 ,#+ROAM_TAGS:
-					 links:"
+#+Source:
+#+ROAM_TAGS:
+links:"
 					 :unnarrowed t)))
 	:custom
 	(org-roam-directory "~/zettelkasten/")
