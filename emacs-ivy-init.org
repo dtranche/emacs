@@ -1,4 +1,3 @@
-
 #+TITLE: Emacs Configuration
 #+AUTHOR: Denis Tranchemontagne
 #+Email: dtranche@gmail.com
@@ -81,7 +80,9 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
 	(add-to-list 'auto-mode-alist '("ratts\/scripts" . python-mode))
 	(add-to-list 'auto-mode-alist '("makefiles\/" . makefile-mode))
 	(setq compile-history
-	'("make -j 8 server_debug_rhel7_x86_64"
+	'("make -j 8 USE_SANITIZE=0 server_debug_native"
+		"make -j 8 USE_SANITIZE=0 server_rpm_native"
+		" make -j 8 server_debug_rhel7_x86_64"
 		"make -j 8 server_rpm_rhel7_x86_64"
 		"make RTS_COMMON_PATH=/home/denist/rts-common -j 8 server_debug_rhel7_x86_64"
 		"make RTS_COMMON_PATH=/home/denist/rts-common -j 8 server_rpm_rhel7_x86_64"
@@ -89,8 +90,6 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
 		"make -j 8 server_rpm_rhel7_x86_64"
 		"make -j 8 server_debug_native"
 		"make -j 8 server_rpm_native"
-		"make -j 8 USE_ASAN=0 server_debug_native"
-		"make -j 8 USE_ASAN=0 server_rpm_native"
 		"git clean -fd"
 		"make -j 32 clean"))
 
@@ -98,14 +97,6 @@ Emacs needs some tweeking out of the box. This will get some of the annoyances g
 #+end_src
 
 * Appearance
-Just a simple light brown theme
-#+begin_src emacs-lisp
-  ;; (use-package alect-themes
-  ;;   :ensure t
-  ;;   :config
-  ;;   ( load-theme 'alect-light-alt t))
- #+end_src
-
 Use an improved simple modeline
 #+begin_src emacs-lisp
 	(setq-default mode-line-format
@@ -284,6 +275,7 @@ align whitespace
 		(global-set-key "\C-b" 'backward-to-word)
 		(define-key global-map "\M-w" 'kill-ring-save)
 		;;(define-key c-mode-base-map [f3] 'ag-project)
+		(define-key global-map [f3] 'ag-project-regexp)
 		(define-key global-map "\M-f" 'find-file)
 		(global-set-key "%" 'match-paren)
 		(when (display-graphic-p)
@@ -334,13 +326,15 @@ align whitespace
 									 (c-basic-indent . 2)))
 		;; move to redline mode
 		(setq compile-history
-					'("make -j 8 server_debug_native"
-						"make -j 8 server_fast_native"
+					'("make -j 8 USE_SANITIZE=0 server_debug_native"
+						"make -j 8 USE_SANITIZE=0 server_rpm_native"
 						"make -j 8 server_rpm_native"
 						"make -j 8 server_debug_rhel7_x86_64"
 						"make -j 8 server_rpm_rhel7_x86_64"
 						"make -j 8 server_debug_rhel6_x86_64"
 						"make -j 8 server_rpm_rhel6_x86_64"
+						"make -j 8 server_debug_native"
+						"make -j 8 server_fast_native"
 						"make RTS_COMMON_PATH=/home/denist/rts-common -j 8 server_debug_rhel7_x86_64"
 						"make RTS_COMMON_PATH=/home/denist/rts-common -j 8 server_rpm_rhel7_x86_64"
 						"git clean -fd"
@@ -435,56 +429,77 @@ To switch to editing mode C-c ' (single quote)
 		:ensure t
 		:init (add-hook 'org-mode-hook 'org-bullets-mode))
 
-	(use-package org-roam
-	:hook
-	(after-init . org-roam-mode)
-	:config
-	 (setq org-roam-capture-templates
-				'(("d" "default" plain (function org-roam-capture--get-point) "%?"
-					 :file-name "%<%Y%m%d>-${slug}"
-					 :head "#+TITLE: ${title}
+	(when (string-equal user-login-name "denistranchemontagne")
+		(use-package org-roam
+			:hook
+			(after-init . org-roam-mode)
+			:init
+
+			:config
+			(setq fill-column 100)
+			(auto-fill-mode 1)
+
+			(setq org-roam-capture-templates
+					'(("d" "default" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "%<%Y%m%d>-${slug}"
+						 :head "#+TITLE: ${title}
 					 ,#+ROAM_TAGS:
 					 links:"
-					 :unnarrowed t)
-					("b" "book" plain (function org-roam-capture--get-point) "%?"
-					 :file-name "${slug}"
-					 :head "#+TITLE: ${title}
+						 :unnarrowed t)
+						("b" "book" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "${slug}"
+						 :head "#+TITLE: ${title}
 					 ,#+AUTHOR:
 					 ,#+ROAM_TAGS:
 					 links:"
-					 :unnarrowed t)
-					("o" "other" plain (function org-roam-capture--get-point) "%?"
-					 :file-name "${slug}"
+						 :unnarrowed t)
+						("o" "other" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "${slug}"
 					 :head "#+TITLE: ${title}
 					 ,#+Source:
 					 ,#+ROAM_TAGS:
 					 links:"
 					 :unnarrowed t)))
-	:custom
-	(org-roam-directory "~/zettelkasten/")
-	(org-roam-completion-system 'ivy)
+		:custom
+		(org-roam-directory "~/zettelkasten/")
+		(org-roam-completion-system 'ivy)
 
-	:bind (:map org-roam-mode-map
-				(("C-c n l" . org-roam)
-				 ("C-c n f" . org-roam-find-file)
-				 ("C-c n g" . org-roam-show-graph))
-				:map org-mode-map
-				(("C-c n i" . org-roam-insert))))
+		:bind (:map org-roam-mode-map
+								(("C-c n l" . org-roam)
+								 ("C-c n f" . org-roam-find-file)
+								 ("C-c n g" . org-roam-show-graph))
+								:map org-mode-map
+								(("C-c n i" . org-roam-insert))))
+		)
+
+
 #+end_src
 
 * Packages
 ** auto-complete
 #+begin_src emacs-lisp
 	;; (use-package auto-complete
-	;;    :diminish auto-complete-mode
-	;;    :bind (:map ac-complete-mode-map (("C-n" . ac-next)
-	;;                                      ("C-p" . ac-previous)))
-	;;    :init
-	;;    (progn
-	;;      (ac-config-default)
-	;;      (global-auto-complete-mode t)))
+	;; 	 :diminish auto-complete-mode
+	;; 	 :bind (:map ac-complete-mode-map (("C-n" . ac-next)
+	;; 																		 ("C-p" . ac-previous)))
+	;; 	 :init
+	;; 	 (progn
+	;; 		 (ac-config-default)
+	;; 		 (global-auto-complete-mode t)))
 #+end_src
+** company
+#+begin_src emacs-lisp
+	(use-package company
+		:ensure t
+		:config
+		(setq company-idle-delay 0)
+		(setq company-minimum-prefix-lenght 3)
 
+		(define-key company-active-map (kbd "C-n") #'company-select-next)
+		(define-key company-active-map (kbd "C-p") #'company-select-previous)
+		(global-company-mode t))
+
+#+end_src
 ** ag
 #+begin_src emacs-lisp
   (use-package ag
@@ -493,16 +508,6 @@ To switch to editing mode C-c ' (single quote)
     :config
     (add-to-list 'ag-arguments "--noaffinity"))
 #+end_src
-
-** xcscope
-# #+begin_src emacs-lisp
-#   (use-package xcscope
-#     :bind
-#     (([f5] . cscope-find-global-definition)
-#      ([f6] . cscope-find-this-symbol)
-#      ([shift f6] . cscope-find-this-text-string))
-#     )
-# #+end_src
 
 ** ace
 #+begin_src emacs-lisp
@@ -524,10 +529,19 @@ To switch to editing mode C-c ' (single quote)
 	 #+end_src
 ** magit
    #+begin_src emacs-lisp
-     (use-package magit
-       :ensure t
-       :bind
-       ("C-x g" . magit-status))
+		 (use-package magit
+			 :ensure t
+			 :bind
+			 ("C-x g" . magit-status)
+			 ("C-c g" . magit-file-dispatch)
+			 :config
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-tags-header)
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-status-headers)
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-pushremote)
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-pushremote)
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-unpulled-from-upstream)
+			 ;;(remove-hook 'magit-status-sections-hook 'magit-insert-unpushed-to-upstream-or-recent)
+			 )
    #+end_src
 ** which-key
    #+begin_src emacs-lisp
@@ -540,27 +554,27 @@ To switch to editing mode C-c ' (single quote)
 Try and make my use of emacs more efficient
 ** movement-hydra
 #+begin_src emacs-lisp
-  (linum-relative-mode)
-  (global-set-key
-   (kbd "C-n")
-   (defhydra hydra-move
-     (:pre (nlinum-mode 1)
-      :post (nlinum-mode -1))
-     "move"
-     ("n" next-line "down")
-     ("p" previous-line "up")
-     ("f" forward-char "forward")
-     ("b" backward-char "back")
-     ("a" beginning-of-line "start of line")
-     ("B" beginning-of-defun "start of func")
-     ("E" end-of-defun "end of func")
-     ("e" move-end-of-line "end of line")
-     ("g" goto-line "goto-line")
-     ("v" scroll-up-command)
-     ;; Converting M-v to V here by analogy.
-     ("V" scroll-down-command)
-     ("l" recenter-top-bottom)
-     ("q" nil )))
+	;;  (linum-relative-mode)
+		;; (global-set-key
+		;;  (kbd "C-n")
+		;;  (defhydra hydra-move
+		;;    (:pre (nlinum-mode 1)
+		;;     :post (nlinum-mode -1))
+		;;    "move"
+		;;    ("n" next-line "down")
+		;;    ("p" previous-line "up")
+		;;    ("f" forward-char "forward")
+		;;    ("b" backward-char "back")
+		;;    ("a" beginning-of-line "start of line")
+		;;    ("B" beginning-of-defun "start of func")
+		;;    ("E" end-of-defun "end of func")
+		;;    ("e" move-end-of-line "end of line")
+		;;    ("g" goto-line "goto-line")
+		;;    ("v" scroll-up-command)
+		;;    ;; Converting M-v to V here by analogy.
+		;;    ("V" scroll-down-command)
+		;;    ("l" recenter-top-bottom)
+		;;    ("q" nil )))
 #+end_src
 ** ggtags-hydra
 #+begin_src emacs-lisp
