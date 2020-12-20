@@ -417,60 +417,61 @@ ivy is simpler
 To execute the block of code use org-babel-execute-src-block
 To switch to editing mode C-c ' (single quote)
 #+begin_src emacs-lisp
-	(use-package org
-		:bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
-		:init
-		(fset 'record_time[?\C-u ?1 ?\C-c ?! return]))
-		;;(setq fill-column 100)
-		;;(auto-fill-mode 1))
-
-
-	(use-package org-bullets
-		:ensure t
-		:init (add-hook 'org-mode-hook 'org-bullets-mode))
-
-	(when (string-equal user-login-name "denistranchemontagne")
-		(use-package org-roam
-			:hook
-			(after-init . org-roam-mode)
+		(use-package org
+			:bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
 			:init
+			(fset 'record_time[?\C-u ?1 ?\C-c ?! return]))
+			;;(setq fill-column 100)
+			;;(auto-fill-mode 1))
 
-			:config
-			(setq fill-column 100)
-			(auto-fill-mode 1)
 
-			(setq org-roam-capture-templates
-					'(("d" "default" plain (function org-roam-capture--get-point) "%?"
-						 :file-name "%<%Y%m%d>-${slug}"
+		(use-package org-bullets
+			:ensure t
+			:init (add-hook 'org-mode-hook 'org-bullets-mode))
+
+
+		(use-package org-roam
+				:if (string-equal user-login-name "denistranchemontagne")
+				:hook
+				(after-init . org-roam-mode)
+				:init
+
+				:config
+				(setq fill-column 100)
+				(auto-fill-mode 1)
+
+				(setq org-roam-capture-templates
+						'(("d" "default" plain (function org-roam-capture--get-point) "%?"
+							 :file-name "%<%Y%m%d>-${slug}"
+							 :head "#+TITLE: ${title}
+	,#+ROAM_TAGS:
+	links:"
+							 :unnarrowed t)
+							("b" "book" plain (function org-roam-capture--get-point) "%?"
+							 :file-name "${slug}"
+							 :head "#+TITLE: ${title}
+	,#+AUTHOR:
+	,#+ROAM_TAGS:
+	links:"
+							 :unnarrowed t)
+							("o" "other" plain (function org-roam-capture--get-point) "%?"
+							 :file-name "${slug}"
 						 :head "#+TITLE: ${title}
-#+ROAM_TAGS:
-links:"
-						 :unnarrowed t)
-						("b" "book" plain (function org-roam-capture--get-point) "%?"
-						 :file-name "${slug}"
-						 :head "#+TITLE: ${title}
-#+AUTHOR:
-#+ROAM_TAGS:
-links:"
-						 :unnarrowed t)
-						("o" "other" plain (function org-roam-capture--get-point) "%?"
-						 :file-name "${slug}"
-					 :head "#+TITLE: ${title}
-#+Source:
-#+ROAM_TAGS:
-links:"
-					 :unnarrowed t)))
-		:custom
-		(org-roam-directory "~/zettelkasten/")
-		(org-roam-completion-system 'ivy)
+	,#+Source:
+	,#+ROAM_TAGS:
+	links:"
+						 :unnarrowed t)))
+			:custom
+			(org-roam-directory "~/zettelkasten/")
+			(org-roam-completion-system 'ivy)
 
-		:bind (:map org-roam-mode-map
-								(("C-c n l" . org-roam)
-								 ("C-c n f" . org-roam-find-file)
-								 ("C-c n g" . org-roam-show-graph))
-								:map org-mode-map
-								(("C-c n i" . org-roam-insert))))
-		)
+			:bind (:map org-roam-mode-map
+									(("C-c n l" . org-roam)
+									 ("C-c n f" . org-roam-find-file)
+									 ("C-c n g" . org-roam-show-graph))
+									:map org-mode-map
+									(("C-c n i" . org-roam-insert))))
+
 
 
 #+end_src

@@ -7,6 +7,14 @@
        '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
+(progn ; `use-package'
+  (setq use-package-always-defer t)
+  (setq use-package-enable-imenu-support t)
+  (setq use-package-minimum-reported-time 0)
+  (setq use-package-verbose t)
+  (setq use-package-compute-statistics t)
+  (require 'use-package))
+
 (require 'ob-tangle)
 ;;(org-babel-load-file
 ;; (expand-file-name "emacs-init.org"
