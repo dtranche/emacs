@@ -16,7 +16,6 @@ here.
 * Enable Use-package
 #+begin_src emacs-lisp :tangle yes
 ;; Put your whole init here
-(message "Updated <2017-11-10 Fri>")
 (eval-when-compile
   (require 'use-package))
 #+end_src
@@ -292,23 +291,20 @@ align whitespace
 		:preface
 		(defun my-c-mode-hook()
 			(which-function-mode 1)
-			(message "In my-c-mode-hook")
+			;;message "In my-c-mode-hook")
 			(define-key c-mode-map [f3] `ag-project-regexp)
+
 			(define-key c-mode-map [f4] `counsel-imenu)
 			(let ((bufname (buffer-file-name)))
 				;;(message (format "The buffer is %s" bufname))
 				(when bufname
 					(cond
 					 ((string-match "/denist/" bufname)
-						(c-set-style "redline")
-
-						(message "Redline c-style"))
+						(c-set-style "redline"))
 					 ((string-match "/denistranchemontagne" bufname)
-						(c-set-style "dtranche")
-						(message "dtranche c-style"))
+						(c-set-style "dtranche"))
 					 (t
-						(c-set-style "k&r")
-						(message "k&r cstyle"))))))
+						(c-set-style "k&r"))))))
 		:config
 		(add-hook 'c-mode-common-hook 'my-c-mode-hook)
 		(modify-syntax-entry ?_ "w" c-mode-syntax-table)
@@ -420,9 +416,15 @@ To switch to editing mode C-c ' (single quote)
 		(use-package org
 			:bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
 			:init
-			(fset 'record_time[?\C-u ?1 ?\C-c ?! return]))
-			;;(setq fill-column 100)
-			;;(auto-fill-mode 1))
+			(fset 'record_time[?\C-u ?1 ?\C-c ?! return])
+			(defun my-org-mode-hook ()
+				"Hook to do what I want"
+				(set (make-local-variable 'company-backends)
+			 '((company-capf company-dabbrev company-files)))
+				(set-fill-column 100)
+				(turn-on-auto-fill))
+
+				(add-hook 'org-mode-hook 'my-org-mode-hook))
 
 
 		(use-package org-bullets
