@@ -2,11 +2,16 @@
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
 ;; You may delete these explanatory comments.
+
+(setq gc-cons-threshold 100000000)
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold 800000)))
+
 (require 'package)
 (add-to-list 'package-archives
        '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
+;; configuration of use-package for speedier startup
 (progn ; `use-package'
   (setq use-package-always-defer t)
   (setq use-package-enable-imenu-support t)
@@ -15,15 +20,22 @@
   (setq use-package-compute-statistics t)
   (require 'use-package))
 
-(require 'ob-tangle)
-;;(org-babel-load-file
-;; (expand-file-name "emacs-init.org"
-;;       user-emacs-directory))
+(use-package benchmark-init
+  :ensure t
+  :config
+  ;; To disable collection of benchmark data after init is done.
+  (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
+(benchmark-init/activate)
+;; is this required?
+(require 'ob-tangle)
+
+;; time the startup
 (use-package esup
   :ensure t
   :commands (esup))
 
+;; print the starup;
 (add-hook 'emacs-startup-hook
 					(lambda ()
             (message "Emacs ready in %s with %d garbage collections."
@@ -32,7 +44,7 @@
                               (time-subtract after-init-time before-init-time)))
                      gcs-done)))
 
-;;(unless (graphic-display-p)
+;; load the real config
 (org-babel-load-file
  (expand-file-name "emacs-ivy-init.org"
                    user-emacs-directory))
