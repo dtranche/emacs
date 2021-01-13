@@ -439,30 +439,21 @@ To switch to editing mode C-c ' (single quote)
 				:init
 
 				:config
-				(setq fill-column 100)
-				(auto-fill-mode 1)
 
 				(setq org-roam-capture-templates
 						'(("d" "default" plain (function org-roam-capture--get-point) "%?"
 							 :file-name "%<%Y%m%d>-${slug}"
-							 :head "#+TITLE: ${title}
-	,#+ROAM_TAGS:
-	links:"
+							 :head "#+TITLE: ${title}\n#+ROAM_TAGS:\nlinks:"
 							 :unnarrowed t)
-							("b" "book" plain (function org-roam-capture--get-point) "%?"
+							 ("b" "book" plain (function org-roam-capture--get-point) "%?"
 							 :file-name "${slug}"
-							 :head "#+TITLE: ${title}
-	,#+AUTHOR:
-	,#+ROAM_TAGS:
-	links:"
+							 :head "#+TITLE: ${title}\n#+AUTHOR:\n#+ROAM_TAGS:\nlinks:\n\n* Overview\n* Characters\n* Thoughts"
 							 :unnarrowed t)
 							("o" "other" plain (function org-roam-capture--get-point) "%?"
 							 :file-name "${slug}"
-						 :head "#+TITLE: ${title}
-	,#+Source:
-	,#+ROAM_TAGS:
-	links:"
+							 :head "#+TITLE: ${title}\n#+Source:\n#+ROAM_TAGS:\nlinks:"
 						 :unnarrowed t)))
+
 			:custom
 			(org-roam-directory "~/zettelkasten/")
 			(org-roam-completion-system 'ivy)
