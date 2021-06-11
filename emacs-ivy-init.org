@@ -274,7 +274,7 @@ align whitespace
 		(global-set-key "\C-b" 'backward-to-word)
 		(define-key global-map "\M-w" 'kill-ring-save)
 		;;(define-key c-mode-base-map [f3] 'ag-project)
-		(define-key global-map [f3] 'ag-project-regexp)
+		(define-key global-map [f3] 'counsel-projectile-ag)
 		(define-key global-map "\M-f" 'find-file)
 		(global-set-key "%" 'match-paren)
 		(when (display-graphic-p)
@@ -286,13 +286,17 @@ align whitespace
 * C/C++ Programming
 #+begin_src emacs-lisp
 	(use-package cc-mode
-		:bind ([f9] . compile)
 
+		:bind ([f9] . compile)
 		:preface
 		(defun my-c-mode-hook()
 			(which-function-mode 1)
 			;;message "In my-c-mode-hook")
-			(define-key c-mode-map [f3] `ag-project-regexp)
+			(set (make-local-variable 'company-backends)
+					 '((company-gtags company-dabbrev company-files)))
+			(company-mode t)
+			(setq company-dabbrev-downcase nil)
+			(define-key c-mode-map [f3] `counsel-projectile-ag)
 
 			(define-key c-mode-map [f4] `counsel-imenu)
 			(let ((bufname (buffer-file-name)))
