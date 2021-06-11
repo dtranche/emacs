@@ -417,57 +417,108 @@ ivy is simpler
 To execute the block of code use org-babel-execute-src-block
 To switch to editing mode C-c ' (single quote)
 #+begin_src emacs-lisp
-		(use-package org
-			:bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
+	(use-package org
+		:bind (:map org-mode-map ([f3] . org-babel-execute-src-block))
+		:config
+		(defun zp/org-find-time-file-property (property &optional anywhere)
+			"Finds the location of the time propery, if anwhere is nil search whole file"
+			( save-excursion
+				(goto-char (point-min))
+				(let ((first-heading
+							 (save-excursion
+								 (re-search-forward org-outline-regexp-bol nil t))))
+					(when (re-search-forward (format "^#\\+%s:" property)
+																	 (if anywhere nil first-heading)
+																	 t)
+						(point)))))
+
+		(defun zp/org-has-time-file-property-p (property &optional anywhere)
+			"Return the position of time file PROPERTY if it is defined.
+			 As a special case, return -1 if the time file PROPERTY exists but
+			 is not defined."
+			(when-let ((pos (zp/org-find-time-file-property property anywhere)))
+				(save-excursion
+					(goto-char pos)
+					(if (and (looking-at-p " ")
+									 (progn (forward-char)
+													(org-at-timestamp-p 'lax)))
+							pos
+						-1))))
+		(defun zp/org-set-time-file-property (property &optional anywhere pos)
+			"Set the time file PROPERTY in the preamble.
+			 When ANYWHERE is non-nil, search beyond the preamble.
+			 If the position of the file PROPERTY has already been computed,
+			 it can be passed in POS."
+			(when-let ((pos (or pos
+													(zp/org-find-time-file-property property))))
+				(save-excursion
+					(goto-char pos)
+					(if (looking-at-p " ")
+							(forward-char)
+						(insert " "))
+					(delete-region (point) (line-end-position))
+					(let* ((now (format-time-string "[%Y-%m-%d %a %H:%M]")))
+						(insert now)))))
+
+		(defun zp/org-set-modified ()
+			"Update the MODIFIED file property in the preamble."
+			(when (derived-mode-p 'org-mode)
+				(zp/org-set-time-file-property "MODIFIED")))
+		:hook
+		((before-save . zp/org-set-modified))
+		:init
+		(fset 'record_time[?\C-u ?1 ?\C-c ?! return])
+		(defun my-org-mode-hook ()
+			"Hook to do what I want"
+			(set (make-local-variable 'company-backends)
+		 '((company-capf company-dabbrev company-files)))
+			(set-fill-column 100)
+			(turn-on-auto-fill))
+
+			(add-hook 'org-mode-hook 'my-org-mode-hook))
+
+
+	(use-package org-bullets
+		:ensure t
+		:init (add-hook 'org-mode-hook 'org-bullets-mode))
+
+
+	(use-package org-roam
+			:if (string-equal user-login-name "denistranchemontagne")
+			:hook
+			(after-init . org-roam-mode)
 			:init
-			(fset 'record_time[?\C-u ?1 ?\C-c ?! return])
-			(defun my-org-mode-hook ()
-				"Hook to do what I want"
-				(set (make-local-variable 'company-backends)
-			 '((company-capf company-dabbrev company-files)))
-				(set-fill-column 100)
-				(turn-on-auto-fill))
 
-				(add-hook 'org-mode-hook 'my-org-mode-hook))
+			:config
 
-
-		(use-package org-bullets
-			:ensure t
-			:init (add-hook 'org-mode-hook 'org-bullets-mode))
-
-
-		(use-package org-roam
-				:if (string-equal user-login-name "denistranchemontagne")
-				:hook
-				(after-init . org-roam-mode)
-				:init
-
-				:config
-
-				(setq org-roam-capture-templates
-						'(("d" "default" plain (function org-roam-capture--get-point) "%?"
-							 :file-name "%<%Y%m%d>-${slug}"
-							 :head "#+TITLE: ${title}\n#+ROAM_TAGS:\nlinks:"
-							 :unnarrowed t)
-							 ("b" "book" plain (function org-roam-capture--get-point) "%?"
-							 :file-name "${slug}"
-							 :head "#+TITLE: ${title}\n#+AUTHOR:\n#+ROAM_TAGS:\nlinks:\n\n* Overview\n* Characters\n* Thoughts"
-							 :unnarrowed t)
-							("o" "other" plain (function org-roam-capture--get-point) "%?"
-							 :file-name "${slug}"
-							 :head "#+TITLE: ${title}\n#+Source:\n#+ROAM_TAGS:\nlinks:"
+			(setq org-roam-capture-templates
+					'(("d" "default" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "%<%Y%m%d>-${slug}"
+						 :head "#+TITLE: ${title}\n#+CREATED: %U\n#+MODIFIED: %U\n#+ROAM_TAGS:\nlinks:"
+						 :unnarrowed t)
+						 ("b" "book" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "${slug}"
+						 :head "#+TITLE: ${title}\n#+AUTHOR:\n#+CREATED: %U\n#+MODIFIED: %U\n#+ROAM_TAGS:\nlinks:\n* Overview\n* Characters\n* Thoughts"
+						 :unnarrowed t)
+						("o" "other" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "${slug}"
+						 :head "#+TITLE: ${title}\n#+Source:\n#+CREATED: %U\n#+MODIFIED: %U\n#+ROAM_TAGS:\nlinks:"
+						 :unnarrowed t)
+						("e" "emacs" plain (function org-roam-capture--get-point) "%?"
+						 :file-name "%<%Y%m%d>-${slug}"
+						 :head "#+TITLE: ${title}\n#+CREATED: %U\n#+MODIFIED: %U\n+ROAM_TAGS\nlinks:\n\n*Feature\n"
 						 :unnarrowed t)))
 
-			:custom
-			(org-roam-directory "~/zettelkasten/")
-			(org-roam-completion-system 'ivy)
+		:custom
+		(org-roam-directory "~/zettelkasten/")
+		(org-roam-completion-system 'ivy)
 
-			:bind (:map org-roam-mode-map
-									(("C-c n l" . org-roam)
-									 ("C-c n f" . org-roam-find-file)
-									 ("C-c n g" . org-roam-show-graph))
-									:map org-mode-map
-									(("C-c n i" . org-roam-insert))))
+		:bind (:map org-roam-mode-map
+								(("C-c n l" . org-roam)
+								 ("C-c n f" . org-roam-find-file)
+								 ("C-c n g" . org-roam-show-graph))
+								:map org-mode-map
+								(("C-c n i" . org-roam-insert))))
 
 
 
@@ -495,7 +546,9 @@ To switch to editing mode C-c ' (single quote)
 
 		(define-key company-active-map (kbd "C-n") #'company-select-next)
 		(define-key company-active-map (kbd "C-p") #'company-select-previous)
-		(global-company-mode t))
+		:init
+		(global-company-mode)
+		:diminish company-mode )
 
 #+end_src
 ** ag
